@@ -68,26 +68,26 @@ const Index = () => {
       <Navbar activeSection={activeSection} onNavigate={handleNavigate} />
       
       {/* Top Ad */}
-      <div className="pt-16">
+      <div className="pt-16 sticky top-0 z-40 bg-background">
         <TopLeaderboard />
         <MobileTopBanner />
       </div>
 
       <main className="relative">
         {/* Sidebar Ad - Desktop */}
-        <div className="hidden xl:block fixed right-4 top-24 z-30">
+        {/*<div className="hidden xl:block fixed right-4 top-24 z-30">
           <SidebarAd />
-        </div>
+        </div>*/}
 
         <HeroSection onStartCalculating={handleStartCalculating} />
         
         <div ref={calculatorRef}>
           <StashCalculator />
         </div>
+
+        <MidContentAd />
         
         <ExpeditionPlanner stashValue={totalValue} />
-        
-        <MidContentAd />
         
         <div ref={loadoutRef}>
           <LoadoutOptimizer />
@@ -101,7 +101,7 @@ const Index = () => {
         
         <FAQ />
         
-        <FooterAd />
+        {/*<FooterAd />*/}
       </main>
 
       <Footer />
