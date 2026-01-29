@@ -8,7 +8,7 @@ interface ExpeditionPlannerProps {
 
 export function ExpeditionPlanner({ stashValue }: ExpeditionPlannerProps) {
   const [coinsInBank, setCoinsInBank] = useState(0);
-  const [expeditionGoal, setExpeditionGoal] = useState(5000);
+  const [expeditionGoal, setExpeditionGoal] = useState(5000000);
   const [expeditionName, setExpeditionName] = useState('Operation: Shadow Strike');
   
   // Simulated expedition data
@@ -19,7 +19,7 @@ export function ExpeditionPlanner({ stashValue }: ExpeditionPlannerProps) {
   const coinsNeeded = Math.max(0, expeditionGoal - totalProgression);
   const exceededBy = totalProgression - expeditionGoal;
   
-  const avgCoinsPerRaid = 500;
+  const avgCoinsPerRaid = 50000;
   const raidsNeeded = Math.ceil(coinsNeeded / avgCoinsPerRaid);
   const hoursPerRaid = 0.5;
   const estimatedHours = raidsNeeded * hoursPerRaid;
@@ -55,17 +55,13 @@ export function ExpeditionPlanner({ stashValue }: ExpeditionPlannerProps) {
               
               <div className="flex items-center gap-4 text-muted-foreground">
                 <div className="flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-warning" />
+                  <span className="font-mono">Next reset</span>
+                  <Clock className="w-4 h-4 text-warning"/>
                   <span className="font-mono">{timeRemaining.days}d {timeRemaining.hours}h</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Coins className="w-4 h-4 text-primary" />
-                  <Input
-                    type="number"
-                    value={expeditionGoal}
-                    onChange={(e) => setExpeditionGoal(parseInt(e.target.value) || 0)}
-                    className="w-24 h-8 bg-muted border-border font-mono"
-                  />
+                  <span className="bg-transparent border-none text-1xl font-bold text-foreground font-mono p-0 h-auto focus-visible:ring-0">{expeditionGoal}</span>
                 </div>
               </div>
             </div>
@@ -149,18 +145,18 @@ export function ExpeditionPlanner({ stashValue }: ExpeditionPlannerProps) {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="bg-muted/50 rounded-lg p-4">
                 <div className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
-                  <Coins className="w-3 h-3" /> Coins in Bank
+                  <Coins className="w-3 h-3"/> Coins in Bank
                 </div>
                 <Input
-                  type="number"
-                  value={coinsInBank}
-                  onChange={(e) => setCoinsInBank(parseInt(e.target.value) || 0)}
-                  className="bg-transparent border-none text-2xl font-bold text-foreground font-mono p-0 h-auto focus-visible:ring-0"
+                    type="number"
+                    value={coinsInBank}
+                    onChange={(e) => setCoinsInBank(parseInt(e.target.value) || 0)}
+                    className="w-24 h-8 bg-muted border-border font-mono"
                 />
               </div>
-              
+
               <div className="bg-muted/50 rounded-lg p-4">
-                <div className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
+              <div className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
                   <TrendingUp className="w-3 h-3" /> Stash Value
                 </div>
                 <div className="text-2xl font-bold text-primary font-mono">
@@ -178,44 +174,6 @@ export function ExpeditionPlanner({ stashValue }: ExpeditionPlannerProps) {
               </div>
             </div>
           </div>
-
-          {/* Projections */}
-          {coinsNeeded > 0 && (
-            <div className="card-tactical rounded-lg p-6">
-              <h3 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
-                <Clock className="w-5 h-5 text-primary" />
-                Time Projections
-              </h3>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="bg-muted/50 rounded-lg p-4">
-                  <div className="text-sm text-muted-foreground mb-1">Estimated Time to Goal</div>
-                  <div className="text-xl font-bold text-foreground font-mono">
-                    ~{estimatedHours.toFixed(1)} hours
-                  </div>
-                  <div className="text-xs text-muted-foreground mt-1">
-                    at {avgCoinsPerRaid} coins/raid average
-                  </div>
-                </div>
-                
-                <div className="bg-muted/50 rounded-lg p-4">
-                  <div className="text-sm text-muted-foreground mb-1">Raids Remaining</div>
-                  <div className="text-xl font-bold text-foreground font-mono">
-                    ~{raidsNeeded} raids
-                  </div>
-                  <div className="text-xs text-muted-foreground mt-1">
-                    at ~{hoursPerRaid * 60}min per raid
-                  </div>
-                </div>
-              </div>
-              
-              <div className="mt-4 p-3 bg-primary/10 rounded-lg border border-primary/30">
-                <p className="text-sm text-primary">
-                  💡 <strong>Pro tip:</strong> Focus on high value/weight ratio items to maximize efficiency!
-                </p>
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </section>

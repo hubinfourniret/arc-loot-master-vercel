@@ -21,27 +21,38 @@ const Index = () => {
 
   const handleNavigate = (section: string) => {
     setActiveSection(section);
-    
+
+    const scrollWithOffset = (element: HTMLElement | null) => {
+      if (!element) return;
+
+      const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
+      const offsetPosition = elementPosition - 150;
+
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth'
+      });
+    };
+
     switch (section) {
       case 'home':
         window.scrollTo({ top: 0, behavior: 'smooth' });
         break;
       case 'calculator':
-        calculatorRef.current?.scrollIntoView({ behavior: 'smooth' });
+        scrollWithOffset(calculatorRef.current);
         break;
       case 'loadout':
-        loadoutRef.current?.scrollIntoView({ behavior: 'smooth' });
+        scrollWithOffset(loadoutRef.current);
         break;
       case 'tier-table':
-        tierTableRef.current?.scrollIntoView({ behavior: 'smooth' });
+        scrollWithOffset(tierTableRef.current);
         break;
     }
   };
 
-  const handleStartCalculating = () => {
-    calculatorRef.current?.scrollIntoView({ behavior: 'smooth' });
-    setActiveSection('calculator');
-  };
+  function onStartCalculating () {
+    handleNavigate("calculator")
+  }
 
   // Update active section based on scroll
   useEffect(() => {
@@ -79,7 +90,7 @@ const Index = () => {
           <SidebarAd />
         </div>*/}
 
-        <HeroSection onStartCalculating={handleStartCalculating} />
+        <HeroSection onStartCalculating={onStartCalculating} />
         
         <div ref={calculatorRef}>
           <StashCalculator />

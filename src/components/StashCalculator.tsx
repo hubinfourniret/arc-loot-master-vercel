@@ -1,10 +1,13 @@
-import React, { useState, useMemo } from 'react';
-import { Plus, Trash2, Save, Download, Upload, Copy, ChevronUp, ChevronDown, Package, Scale, Coins, Recycle, Hash } from 'lucide-react';
+import React, { useState, useMemo, useRef } from 'react';
+import { Trash2, Save, Upload, Copy, ChevronUp, ChevronDown, Package, Scale, Coins, Recycle, Hash, FileDown, FileUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useStash, StashBackup } from '@/hooks/useStash';
-import { items, itemTypes } from '@/data/items';
+import { useStash, StashBackup, getEffectiveValue, getEffectiveWeight } from '@/hooks/useStash';
+import { WeaponLevel } from '@/data/items';
+import { ItemImage } from '@/components/ItemImage';
+import { ItemSearchCombobox } from '@/components/ItemSearchCombobox';
+import { WeaponModSelector } from '@/components/WeaponModSelector';
 import { toast } from 'sonner';
 
 type SortKey = 'name' | 'quantity' | 'value' | 'weight' | 'ratio';
@@ -16,11 +19,15 @@ export function StashCalculator() {
     addItem,
     updateQuantity,
     removeItem,
+    addModToWeapon,
+    removeModFromWeapon,
     clearAll,
     saveBackup,
     getBackups,
     loadBackup,
     exportAsText,
+    exportToFile,
+    importFromFile,
     totalValue,
     totalWeight,
     valuePerWeight,
@@ -28,24 +35,18 @@ export function StashCalculator() {
     uniqueItems,
     valueByType,
   } = useStash();
+  
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [selectedItemId, setSelectedItemId] = useState<string>('');
-  const [quantity, setQuantity] = useState(1);
-  const [searchTerm, setSearchTerm] = useState('');
   const [sortKey, setSortKey] = useState<SortKey>('value');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [backups, setBackups] = useState<StashBackup[]>([]);
 
-  const filteredItems = useMemo(() => {
-    return items.filter(item =>
-      item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.type.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [searchTerm]);
-
   const sortedStashItems = useMemo(() => {
     return [...stashItems].sort((a, b) => {
       let aVal: number, bVal: number;
+      const aValue = a.item.type === "Weapons" ? a.item.value[a.weaponLevel] : a.item.value
+      const bValue = b.item.type === "Weapons" ? b.item.value[b.weaponLevel] : b.item.value
       switch (sortKey) {
         case 'name':
           return sortDirection === 'asc' 
@@ -56,16 +57,17 @@ export function StashCalculator() {
           bVal = b.quantity;
           break;
         case 'value':
-          aVal = a.item.value * a.quantity;
-          bVal = b.item.value * b.quantity;
+          aVal = aValue * a.quantity;
+          bVal = bValue * b.quantity;
+          break;
           break;
         case 'weight':
           aVal = a.item.weight * a.quantity;
           bVal = b.item.weight * b.quantity;
           break;
         case 'ratio':
-          aVal = a.item.value / a.item.weight;
-          bVal = b.item.value / b.item.weight;
+          aVal = aValue / a.item.weight;
+          bVal = bValue / b.item.weight;
           break;
         default:
           return 0;
@@ -74,14 +76,8 @@ export function StashCalculator() {
     });
   }, [stashItems, sortKey, sortDirection]);
 
-  const handleAddItem = () => {
-    if (!selectedItemId) {
-      toast.error('Please select an item');
-      return;
-    }
-    addItem(selectedItemId, quantity);
-    setSelectedItemId('');
-    setQuantity(1);
+  const handleAddItem = (itemId: string, qty: number, weaponLevel?: WeaponLevel) => {
+    addItem(itemId, qty, weaponLevel);
     toast.success('Item added to stash');
   };
 
@@ -111,12 +107,34 @@ export function StashCalculator() {
     toast.success('Stash copied to clipboard');
   };
 
+  const handleExportFile = () => {
+    exportToFile();
+    toast.success('Stash exported to file');
+  };
+
+  const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    const success = await importFromFile(file);
+    if (success) {
+      toast.success('Stash imported successfully');
+    } else {
+      toast.error('Failed to import stash - invalid file format');
+    }
+    
+    // Reset input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
   const SortIcon = ({ column }: { column: SortKey }) => {
     if (sortKey !== column) return null;
     return sortDirection === 'asc' ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />;
   };
 
-  const weightPercent = (totalWeight / 150) * 100;
+  const weightPercent = (totalWeight / 90) * 100;
   const weightColor = weightPercent > 100 ? 'bg-destructive' : weightPercent > 80 ? 'bg-warning' : 'bg-success';
 
   return (
@@ -126,67 +144,21 @@ export function StashCalculator() {
           <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-2">
             Stash Value <span className="text-gradient-primary">Calculator</span>
           </h2>
-          <p className="text-muted-foreground">Add items to calculate your total stash value</p>
+          <p className="text-muted-foreground">Search and add items to calculate your total stash value</p>
         </div>
 
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Input Section */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Add Item Form */}
+            {/* Add Item Form - New Combobox */}
             <div className="card-tactical rounded-lg p-6">
-              <h3 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
-                <Plus className="w-5 h-5 text-primary" />
-                Add Items to Your Stash
+              <h3 className="text-lg font-bold text-foreground mb-4">
+                Quick Add Items
               </h3>
-              
-              <div className="flex flex-col sm:flex-row gap-3">
-                <div className="flex-1">
-                  <Input
-                    placeholder="Search items..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="mb-2 bg-muted border-border"
-                  />
-                  <Select value={selectedItemId} onValueChange={setSelectedItemId}>
-                    <SelectTrigger className="bg-muted border-border">
-                      <SelectValue placeholder="Select an item..." />
-                    </SelectTrigger>
-                    <SelectContent className="bg-popover border-border max-h-64">
-                      {filteredItems.map(item => (
-                        <SelectItem key={item.id} value={item.id}>
-                          <span className="flex items-center gap-2">
-                            <span className={`text-xs px-1.5 py-0.5 rounded ${
-                              item.rarity === 'Legendary' ? 'bg-yellow-500/20 text-yellow-400' :
-                              item.rarity === 'Rare' ? 'bg-primary/20 text-primary' :
-                              'bg-muted-foreground/20 text-muted-foreground'
-                            }`}>
-                              {item.type.slice(0, 4)}
-                            </span>
-                            {item.name} - {item.value}c
-                          </span>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div className="w-24">
-                  <label className="text-xs text-muted-foreground mb-1 block">Qty</label>
-                  <Input
-                    type="number"
-                    min={1}
-                    value={quantity}
-                    onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-                    className="bg-muted border-border"
-                  />
-                </div>
-                
-                <div className="flex items-end">
-                  <Button onClick={handleAddItem} className="bg-primary text-primary-foreground hover:bg-primary/90">
-                    <Plus className="w-4 h-4 mr-1" /> Add
-                  </Button>
-                </div>
-              </div>
+              <p className="text-sm text-muted-foreground mb-4">
+                Search by name, type or rarity. Click + or press Enter to add items quickly.
+              </p>
+              <ItemSearchCombobox onAddItem={handleAddItem} />
             </div>
 
             {/* Stash Table */}
@@ -211,8 +183,21 @@ export function StashCalculator() {
                     </SelectContent>
                   </Select>
                   <Button variant="outline" size="sm" onClick={handleExport}>
-                    <Copy className="w-4 h-4 mr-1" /> Export
+                    <Copy className="w-4 h-4 mr-1" /> Copy
                   </Button>
+                  <Button variant="outline" size="sm" onClick={handleExportFile}>
+                    <FileDown className="w-4 h-4 mr-1" /> Export
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
+                    <FileUp className="w-4 h-4 mr-1" /> Import
+                  </Button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".json"
+                    onChange={handleImportFile}
+                    className="hidden"
+                  />
                   <Button variant="destructive" size="sm" onClick={clearAll}>
                     <Trash2 className="w-4 h-4" />
                   </Button>
@@ -223,6 +208,7 @@ export function StashCalculator() {
                 <table className="w-full">
                   <thead className="bg-muted/50">
                     <tr>
+                      <th className="w-16 p-3 text-sm font-semibold text-muted-foreground">Image</th>
                       <th 
                         className="text-left p-3 text-sm font-semibold text-muted-foreground cursor-pointer hover:text-foreground"
                         onClick={() => handleSort('name')}
@@ -260,58 +246,91 @@ export function StashCalculator() {
                   <tbody>
                     {sortedStashItems.length === 0 ? (
                       <tr>
-                        <td colSpan={7} className="text-center py-12 text-muted-foreground">
+                        <td colSpan={8} className="text-center py-12 text-muted-foreground">
                           <Package className="w-12 h-12 mx-auto mb-3 opacity-50" />
                           <p>Your stash is empty. Add some items!</p>
                         </td>
                       </tr>
                     ) : (
-                      sortedStashItems.map((stash) => (
-                        <tr key={stash.itemId} className="border-t border-border hover:bg-muted/30 transition-colors">
-                          <td className="p-3">
-                            <div className="flex items-center gap-2">
-                              <span className={`text-xs px-1.5 py-0.5 rounded border ${
-                                stash.item.rarity === 'Legendary' ? 'rarity-legendary' :
-                                stash.item.rarity === 'Rare' ? 'rarity-rare' : 'rarity-common'
-                              }`}>
-                                {stash.item.rarity.charAt(0)}
-                              </span>
-                              <span className="text-foreground font-medium">{stash.item.name}</span>
-                            </div>
-                          </td>
-                          <td className="p-3 text-center">
-                            <Input
-                              type="number"
-                              min={1}
-                              value={stash.quantity}
-                              onChange={(e) => updateQuantity(stash.itemId, parseInt(e.target.value) || 0)}
-                              className="w-16 h-8 text-center bg-muted border-border mx-auto"
-                            />
-                          </td>
-                          <td className="p-3 text-right text-muted-foreground font-mono">
-                            {stash.item.value.toLocaleString()}
-                          </td>
-                          <td className="p-3 text-right text-primary font-bold font-mono">
-                            {(stash.item.value * stash.quantity).toLocaleString()}
-                          </td>
-                          <td className="p-3 text-right text-muted-foreground font-mono hidden sm:table-cell">
-                            {(stash.item.weight * stash.quantity).toFixed(1)}kg
-                          </td>
-                          <td className="p-3 text-right text-success font-mono hidden md:table-cell">
-                            {(stash.item.value / stash.item.weight).toFixed(1)}
-                          </td>
-                          <td className="p-3 text-center">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => removeItem(stash.itemId)}
-                              className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/20"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </td>
-                        </tr>
-                      ))
+                      sortedStashItems.map((stash) => {
+                        const effectiveValue = getEffectiveValue(stash);
+                        const effectiveWeight = getEffectiveWeight(stash);
+                        const stashKey = stash.item.type === 'Weapons' 
+                          ? `${stash.itemId}-lvl${stash.weaponLevel}` 
+                          : stash.itemId;
+                        const isWeapon = stash.item.type === 'Weapons';
+                        
+                        return (
+                          <tr key={stashKey} className="border-t border-border hover:bg-muted/30 transition-colors align-top">
+                            <td className="p-3">
+                              <ItemImage 
+                                src={stash.item.imageUrl} 
+                                alt={stash.item.name} 
+                                size="sm" 
+                                rarity={stash.item.rarity} 
+                              />
+                            </td>
+                            <td className="p-3">
+                              <div className="space-y-2">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <span className={`text-xs px-1.5 py-0.5 rounded border ${
+                                    stash.item.rarity === 'Legendary' ? 'rarity-legendary' :
+                                    stash.item.rarity === 'Rare' ? 'rarity-rare' : 'rarity-common'
+                                  }`}>
+                                    {stash.item.rarity.charAt(0)}
+                                  </span>
+                                  <span className="text-foreground font-medium">{stash.item.name}</span>
+                                  {stash.weaponLevel && (
+                                    <span className="text-xs px-1.5 py-0.5 rounded bg-accent text-accent-foreground">
+                                      Lvl {stash.weaponLevel}
+                                    </span>
+                                  )}
+                                </div>
+                                {/* Weapon Mods Section */}
+                                {isWeapon && stash.weaponLevel && (
+                                  <WeaponModSelector
+                                    weaponName={stash.item.name}
+                                    attachedMods={stash.attachedMods || []}
+                                    onAddMod={(modId) => addModToWeapon(stash.itemId, stash.weaponLevel!, modId)}
+                                    onRemoveMod={(modId) => removeModFromWeapon(stash.itemId, stash.weaponLevel!, modId)}
+                                  />
+                                )}
+                              </div>
+                            </td>
+                            <td className="p-3 text-center">
+                              <Input
+                                type="number"
+                                min={1}
+                                value={stash.quantity}
+                                onChange={(e) => updateQuantity(stash.itemId, parseInt(e.target.value) || 0, stash.weaponLevel)}
+                                className="w-16 h-8 text-center bg-muted border-border mx-auto"
+                              />
+                            </td>
+                            <td className="p-3 text-right text-muted-foreground font-mono">
+                              {effectiveValue.toLocaleString()}
+                            </td>
+                            <td className="p-3 text-right text-primary font-bold font-mono">
+                              {(effectiveValue * stash.quantity).toLocaleString()}
+                            </td>
+                            <td className="p-3 text-right text-muted-foreground font-mono hidden sm:table-cell">
+                              {(effectiveWeight * stash.quantity).toFixed(1)}kg
+                            </td>
+                            <td className="p-3 text-right text-success font-mono hidden md:table-cell">
+                              {(effectiveValue / effectiveWeight).toFixed(1)}
+                            </td>
+                            <td className="p-3 text-center">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => removeItem(stash.itemId, stash.weaponLevel)}
+                                className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/20"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </td>
+                          </tr>
+                        );
+                      })
                     )}
                   </tbody>
                 </table>
@@ -344,7 +363,7 @@ export function StashCalculator() {
                     <span className="text-sm">Total Weight</span>
                   </div>
                   <span className="font-mono text-foreground">
-                    {totalWeight.toFixed(1)} / 150kg
+                    {totalWeight.toFixed(1)}kg
                   </span>
                 </div>
                 <div className="progress-tactical h-3 rounded">

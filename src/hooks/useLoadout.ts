@@ -148,9 +148,17 @@ export function useLoadout() {
     }
   }, []);
 
+  // Helper to get base value for an item (handles weapon arrays)
+  const getItemValue = (item: Item): number => {
+    if (Array.isArray(item.value)) {
+      return item.value[0] || 0; // Default to level 1 for loadout
+    }
+    return item.value;
+  };
+
   // Calculations
   const filledSlots = slots.filter(s => s.item !== null);
-  const totalValue = filledSlots.reduce((sum, s) => sum + (s.item?.value || 0), 0);
+  const totalValue = filledSlots.reduce((sum, s) => sum + getItemValue(s.item!), 0);
   const totalWeight = filledSlots.reduce((sum, s) => sum + (s.item?.weight || 0), 0);
   const totalDps = filledSlots
     .filter(s => s.item?.dps)
@@ -167,7 +175,7 @@ export function useLoadout() {
       .filter(s => s.item)
       .map(s => ({
         item: s.item!,
-        ratio: s.item!.value / s.item!.weight
+        ratio: getItemValue(s.item!) / s.item!.weight
       }))
       .sort((a, b) => b.ratio - a.ratio);
     return withRatio[0]?.item || null;

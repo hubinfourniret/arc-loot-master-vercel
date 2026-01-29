@@ -229,6 +229,16 @@
   .rarity-rare {
     @apply text-primary border-primary/50;
   }
+
+  .rarity-epic {
+    color: hsl(281, 75%, 56%);
+    border-color: hsl(281 75% 56% / 0.5);
+  }
+
+  .rarity-uncommon {
+    color: hsl(103, 64%, 52%);
+    border-color: hsl(103 64% 52% / 0.5);
+  }
   
   .rarity-legendary {
     color: hsl(45 100% 50%);

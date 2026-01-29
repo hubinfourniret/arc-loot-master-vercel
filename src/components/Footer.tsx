@@ -1,5 +1,6 @@
 import React from 'react';
 import { Crosshair, Github, Twitter, MessageCircle } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 export function Footer() {
   return (
@@ -16,9 +17,17 @@ export function Footer() {
             </div>
           </div>
 
-          <div className="text-center text-xs text-muted-foreground">
-            <p>This is a fan-made tool. Arc Raiders™ is a trademark of Embark Studios.</p>
-            <p className="mt-1">© {new Date().getFullYear()} Arc Raiders Loot Master. Not affiliated with Embark Studios.</p>
+          {/* Footer Links */}
+          <div className="flex items-center gap-6 text-sm">
+            <Link to="/about" className="text-muted-foreground hover:text-primary transition-colors">
+              About
+            </Link>
+            <Link to="/contact" className="text-muted-foreground hover:text-primary transition-colors">
+              Contact
+            </Link>
+            <Link to="/privacy" className="text-muted-foreground hover:text-primary transition-colors">
+              Privacy Policy
+            </Link>
           </div>
 
           <div className="flex items-center gap-4">
@@ -47,6 +56,11 @@ export function Footer() {
               <Github className="w-5 h-5" />
             </a>
           </div>
+        </div>
+
+        <div className="text-center text-xs text-muted-foreground mt-6 pt-6 border-t border-border">
+          <p>This is a fan-made tool. Arc Raiders™ is a trademark of Embark Studios.</p>
+          <p className="mt-1">© {new Date().getFullYear()} Arc Raiders Loot Master. Not affiliated with Embark Studios.</p>
         </div>
       </div>
     </footer>

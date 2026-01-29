@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useLoadout } from '@/hooks/useLoadout';
-import { items } from '@/data/items';
+import { allItems } from '@/data/items';
+import { ItemImage } from '@/components/ItemImage';
 import { toast } from 'sonner';
 
 export function LoadoutOptimizer() {
@@ -59,9 +60,9 @@ export function LoadoutOptimizer() {
 
   const getItemsForSlot = (slotType: string) => {
     if (slotType === 'Consumables') {
-      return items.filter(i => i.type === 'Consumables' || i.type === 'Ammo');
+      return allItems.filter(i => i.type === 'Consumables' || i.type === 'Ammo');
     }
-    return items.filter(i => i.type === slotType);
+    return allItems.filter(i => i.type === slotType);
   };
 
   return (
@@ -102,18 +103,12 @@ export function LoadoutOptimizer() {
               {slots.map((slot) => (
                 <div key={slot.slotId} className="card-tactical rounded-lg p-4">
                   <div className="flex items-start gap-4">
-                    <div className="w-16 h-16 bg-muted rounded-lg border border-border flex items-center justify-center flex-shrink-0">
-                      {slot.item ? (
-                        <span className={`text-2xl font-bold ${
-                          slot.item.rarity === 'Legendary' ? 'text-yellow-400' :
-                          slot.item.rarity === 'Rare' ? 'text-primary' : 'text-muted-foreground'
-                        }`}>
-                          {slot.item.name.charAt(0)}
-                        </span>
-                      ) : (
-                        <span className="text-muted-foreground text-2xl">?</span>
-                      )}
-                    </div>
+                    <ItemImage 
+                      src={slot.item?.imageUrl} 
+                      alt={slot.item?.name || 'Empty slot'} 
+                      size="lg" 
+                      rarity={slot.item?.rarity || 'Common'} 
+                    />
                     
                     <div className="flex-1">
                       <div className="flex items-center justify-between mb-2">
@@ -149,7 +144,7 @@ export function LoadoutOptimizer() {
                                 }`}>
                                   {item.rarity.charAt(0)}
                                 </span>
-                                {item.name} - {item.value}c / {item.weight}kg
+                                {item.name} - {Array.isArray(item.value) ? item.value[0] : item.value}c / {item.weight}kg
                               </span>
                             </SelectItem>
                           ))}
@@ -158,7 +153,7 @@ export function LoadoutOptimizer() {
                       
                       {slot.item && (
                         <div className="mt-2 flex flex-wrap gap-3 text-xs text-muted-foreground">
-                          <span>💰 {slot.item.value.toLocaleString()} coins</span>
+                          <span>💰 {(Array.isArray(slot.item.value) ? slot.item.value[0] : slot.item.value).toLocaleString()} coins</span>
                           <span>⚖️ {slot.item.weight}kg</span>
                           {slot.item.dps && <span>🎯 {slot.item.dps} DPS</span>}
                           <span className={`px-1.5 py-0.5 rounded ${
@@ -270,7 +265,7 @@ export function LoadoutOptimizer() {
                     <div className="text-sm text-muted-foreground mb-1">Best Value/Weight</div>
                     <div className="text-foreground font-bold">{bestRatioItem.name}</div>
                     <div className="text-xs text-success font-mono">
-                      {(bestRatioItem.value / bestRatioItem.weight).toFixed(1)} coins/kg
+                      {((Array.isArray(bestRatioItem.value) ? bestRatioItem.value[0] : bestRatioItem.value) / bestRatioItem.weight).toFixed(1)} coins/kg
                     </div>
                   </div>
                 )}
