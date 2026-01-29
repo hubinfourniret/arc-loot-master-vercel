@@ -56,7 +56,7 @@ export function Navbar({ activeSection, onNavigate }: NavbarProps) {
             onClick={() => isHomePage && onNavigate('home')}
           >
             <div className="w-10 h-10 rounded bg-primary/20 border border-primary flex items-center justify-center glow-cyan">
-              <Crosshair className="w-6 h-6 text-primary" />
+              <img src="/public/favicon.ico" className="w-6 h-6 text-primary" alt={"Main icon"}/>
             </div>
             <div className="hidden sm:block">
               <h1 className="text-lg font-bold text-foreground leading-tight">
