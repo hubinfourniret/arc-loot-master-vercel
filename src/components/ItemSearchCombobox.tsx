@@ -25,14 +25,14 @@ export function ItemSearchCombobox({ onAddItem }: ItemSearchComboboxProps) {
   const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   const filteredItems = useMemo(() => {
-    if (!searchTerm.trim()) return allItems.slice(0, 50);
+    if (!searchTerm.trim()) return allItems;
     
     const term = searchTerm.toLowerCase();
     return allItems.filter(item =>
       item.name.toLowerCase().includes(term) ||
       item.type.toLowerCase().includes(term) ||
       item.rarity.toLowerCase().includes(term)
-    ).slice(0, 50);
+    )
   }, [searchTerm]);
 
   // Reset itemRefs when filtered items change
@@ -114,13 +114,17 @@ export function ItemSearchCombobox({ onAddItem }: ItemSearchComboboxProps) {
   const getRarityStyles = (rarity: string) => {
     switch (rarity) {
       case 'Legendary':
-        return 'border-yellow-500/30 bg-yellow-500/5';
+        //return 'border-yellow-500/30 bg-yellow-500/5';
+        return 'bg-yellow-500/5';
       case 'Epic':
-        return 'border-purple-500/30 bg-purple-500/5';
+        //return 'border-purple-500/30 bg-purple-500/5';
+        return 'bg-purple-500/5';
       case 'Rare':
-        return 'border-primary/30 bg-primary/5';
+        //return 'border-primary/30 bg-primary/5';
+        return 'bg-primary/5';
       case 'Uncommon':
-        return 'border-green-500/30 bg-green-500/5';
+        //return 'border-green-500/30 bg-green-500/5';
+        return 'bg-green-500/5';
       default:
         return 'border-border bg-muted/30';
     }
@@ -201,12 +205,12 @@ export function ItemSearchCombobox({ onAddItem }: ItemSearchComboboxProps) {
                             {item.name}
                           </span>
                           <span className={cn(
-                            "text-xs px-1.5 py-0.5 rounded shrink-0",
-                            item.rarity === 'Legendary' && 'bg-yellow-500/20 text-yellow-400',
-                            item.rarity === 'Epic' && 'bg-purple-500/20 text-purple-400',
-                            item.rarity === 'Rare' && 'bg-primary/20 text-primary',
-                            item.rarity === 'Uncommon' && 'bg-green-500/20 text-green-400',
-                            item.rarity === 'Common' && 'bg-muted-foreground/20 text-muted-foreground'
+                            "text-xs px-1.5 py-0.5 rounded shrink-0 border",
+                              item.rarity === 'Legendary' ? 'rarity-legendary bg-yellow-500/10' :
+                                  item.rarity === 'Rare' ? 'rarity-rare bg-primary/10' :
+                                      item.rarity === 'Epic' ? 'rarity-epic bg-purple-500/10' :
+                                          item.rarity === 'Uncommon' ? 'rarity-uncommon bg-green-500/10' :
+                                              'rarity-common bg-muted'
                           )}>
                             {item.rarity}
                           </span>

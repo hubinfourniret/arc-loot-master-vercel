@@ -284,7 +284,7 @@ export function TierTable({ onAddItem }: TierTableProps) {
                         </div>
                       </td>
                       <td className="p-3 text-muted-foreground hidden sm:table-cell">
-                        <span className="text-xs px-2 py-1 rounded bg-muted">{item.type}</span>
+                        <span className="text-xs px-2 py-1 rounded bg-muted whitespace-nowrap">{item.type}</span>
                       </td>
                       <td className="p-3 text-right text-primary font-mono font-bold">
                         {item.type === "Weapons" ? item.value[0].toLocaleString() : item.value.toLocaleString()}

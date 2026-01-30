@@ -19,12 +19,7 @@ const sizeClasses = {
 export function ItemImage({ src, alt, size = 'md', rarity = 'Common', className = '' }: ItemImageProps) {
   const [hasError, setHasError] = useState(false);
 
-  const borderColor = 
-    rarity === 'Legendary' ? 'border-yellow-500/50' :
-    rarity === 'Rare' ? 'border-primary/50' : 
-    rarity === 'Epic' ? 'border-purple/50' :
-    rarity === 'Uncommon' ? 'border-green/50' :
-    'border-border';
+  const borderColor = 'border-border';
 
   const bgColor =
     rarity === 'Legendary' ? 'bg-yellow-500/10' :
