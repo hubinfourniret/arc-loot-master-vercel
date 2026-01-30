@@ -55,7 +55,7 @@ export function Navbar({ activeSection, onNavigate }: NavbarProps) {
             className="flex items-center gap-3 cursor-pointer"
             onClick={() => isHomePage && onNavigate('home')}
           >
-            <img src="/public/favicon.ico" className="w-12 h-12 text-primary" alt={"Main icon"}/>
+            <img src="/favicon.ico" className="w-12 h-12 text-primary" alt={"Main icon"}/>
             <div className="hidden sm:block">
               <h1 className="text-lg font-bold text-foreground leading-tight">
                 Arc Raiders
