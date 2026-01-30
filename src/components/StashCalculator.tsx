@@ -9,6 +9,7 @@ import { ItemImage } from '@/components/ItemImage';
 import { ItemSearchCombobox } from '@/components/ItemSearchCombobox';
 import { WeaponModSelector } from '@/components/WeaponModSelector';
 import { toast } from 'sonner';
+import {Checkbox} from "@/components/ui/checkbox.tsx";
 
 type SortKey = 'name' | 'quantity' | 'value' | 'weight' | 'ratio';
 type SortDirection = 'asc' | 'desc';
@@ -34,6 +35,7 @@ export function StashCalculator() {
     recycleValue,
     uniqueItems,
     valueByType,
+    levelStash
   } = useStash();
   
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -41,6 +43,20 @@ export function StashCalculator() {
   const [sortKey, setSortKey] = useState<SortKey>('value');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [backups, setBackups] = useState<StashBackup[]>([]);
+  const [sizeStash, setSizeStash] = useState<number>(64);
+  const [isExped, setIsExped] = useState<boolean>(false);
+  const [baseSize, setBaseSize] = useState<number>(64);
+
+  const handleSizeChange = (value: string) => {
+    const size = parseInt(value);
+    setBaseSize(size);
+    setSizeStash(isExped ? size + 12 : size);
+  };
+
+  const handleExpedChange = (checked: boolean) => {
+    setIsExped(checked);
+    setSizeStash(checked ? baseSize + 12 : baseSize);
+  };
 
   const sortedStashItems = useMemo(() => {
     return [...stashItems].sort((a, b) => {
@@ -166,11 +182,31 @@ export function StashCalculator() {
               <div className="p-4 border-b border-border flex flex-wrap items-center justify-between gap-3">
                 <h3 className="text-lg font-bold text-foreground">Your Stash</h3>
                 <div className="flex gap-2">
+                  <Select onValueChange={handleSizeChange} value={baseSize.toString()}>
+                    <SelectTrigger className="w-24 h-9 bg-muted border-border">
+                      <span className="text-xs">Size: {sizeStash}</span>
+                    </SelectTrigger>
+                    <SelectContent className="bg-popover border-border">
+                      {levelStash.map(b => (
+                          <SelectItem key={b.key} value={b.value.toString()}>
+                            {b.key}
+                          </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <Checkbox
+                        checked={isExped}
+                        onCheckedChange={handleExpedChange}
+                        className="border-border"
+                    />
+                    <span className="text-xs text-muted-foreground">Expedition (+12)</span>
+                  </label>
                   <Button variant="outline" size="sm" onClick={handleSaveBackup}>
                     <Save className="w-4 h-4 mr-1" /> Save
                   </Button>
                   <Select onValueChange={handleLoadBackup}>
-                    <SelectTrigger className="w-32 h-9 bg-muted border-border">
+                    <SelectTrigger className="w-28 h-9 bg-muted border-border">
                       <Upload className="w-4 h-4 mr-1" />
                       <span className="text-xs">Load</span>
                     </SelectTrigger>

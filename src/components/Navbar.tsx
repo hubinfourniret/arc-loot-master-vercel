@@ -46,6 +46,10 @@ export function Navbar({ activeSection, onNavigate }: NavbarProps) {
           ? 'bg-background/95 backdrop-blur-md border-b border-border shadow-lg' 
           : 'bg-transparent'
       }`}
+      style={{
+        paddingRight: 'var(--removed-body-scroll-bar-size, 0px)',
+        transition: 'background-color 0.3s, border-color 0.3s, box-shadow 0.3s', // ✅ Pas de transition sur padding
+      }}
     >
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">

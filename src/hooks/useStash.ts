@@ -304,6 +304,19 @@ export function useStash() {
     return acc;
   }, {} as Record<string, number>);
 
+  const levelStash = [
+    { key: 'level 1', value: 64 },
+    { key: 'level 2', value: 88 },
+    { key: 'level 3', value: 112 },
+    { key: 'level 4', value: 136 },
+    { key: 'level 5', value: 160 },
+    { key: 'level 6', value: 184 },
+    { key: 'level 7', value: 208 },
+    { key: 'level 8', value: 232 },
+    { key: 'level 9', value: 256 },
+    { key: 'level 10', value: 280 },
+  ];
+
   return {
     stashItems,
     addItem,
@@ -324,5 +337,6 @@ export function useStash() {
     recycleValue,
     uniqueItems,
     valueByType,
+    levelStash
   };
 }
